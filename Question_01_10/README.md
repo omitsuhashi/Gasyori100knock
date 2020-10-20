@@ -73,24 +73,51 @@ plt.ylabel('appearance')
 plt.show()
 ```
 
-<img src="assets/histogram-Gray.jpg" width=400>
+<img src="assets/histogram-Gray.jpg" width=300>
 
-二値化はある値を境界にして、０か１にする方法だけど、
+二値化はある値を境界にして、０か１にする方法だけど、大津の二値化は閾値を自動的に決定する方法である。ここでは閾値によって分離される画素をそれぞれクラス0,1とする。
 
-- 閾値t未満をクラス0, t以上をクラス1とする。
-- w0, w1 ... 閾値tにより分離された各クラスの画素数の割合 (w0 + w1 = 1を満たす)
-- S0^2, S1^2 ... 各クラスの画素値の分散
-- M0, M1 ... 各クラスの画素値の平均値
+<img src="assets/histogram-Gray-1.png" width=300>
 
-<img src="assets/histogram-Gray-1.png" width=400>
+ある閾値tによって、クラス0と1が上手く分離できれば良い二値化と言える。ということで、クラス0と1の分離度を定義する。
+
+<img src="assets/otsu_binary_omega.png" width=45> ... クラス0, 1に属する画素数
+
+<img src="assets/otsu_binary_sigma.png" width=45> ... クラス0, 1に属する画素値の分散
+
+<img src="assets/otsu_binary_M.png" width=45> ... クラス0, 1に属する画素値の平均値
+
+<img src="assets/otsu_binary_Mt.png" width=20> ... 画像全体の画素値の平均値
+
+<img src="assets/otsu_binary_p.png" width=45> ... クラス0, 1に属する画素値の合計値
 
 とすると、
 
-<img src="assets/otsu_binary_1.png" width=500>
+クラス0,1の分散の重み付き和を示す**クラス内分散**は次式となる。
 
-となり、分離度Xは次式で定義される。
+<img src="assets/otsu_binary_sigma_w.png" width=150>
 
-<img src="assets/otsu_binary_2.png" width=300>
+クラス0,1の平均値が画像全体の平均からどれだけ離れているかを示す**クラス間分散**は次式となる。
+
+<img src="assets/otsu_binary_sigma_b.png" width=400>
+
+分離の度合いは**クラス内分散が小さく、かつクラス間分散が大きく**なるように定義される。（クラス分類と同様の考え方）
+
+<img src="assets/otsu_binary_x.png" width=80>
+
+画像全体の画素の分散はクラス内分散とクラス間分散の和となる。
+
+<img src="assets/otsu_binary_sigma_t.png" width=120>
+
+よって分離度Xは次式で定義される。
+
+<img src="assets/otsu_binary_x2.png" width=150>
+
+この分離度が最大となれば良くて、つまりクラス間分散が最大になれば良い。
+
+<img src="assets/otsu_binary_argmax.png" width=200>
+
+つまり、閾値を[0, 255]の各値でクラス間分散を計算し、最大になる閾値が最適な閾値である。
 
 <!--
 ```bash
@@ -102,18 +129,11 @@ plt.show()
 ```
 -->
 
-となるので、
-
-<img src="assets/otsu_binary_3.png" width=300>
-
 <!--
 ```bash
 argmax_{t} X = argmax_{t} Sb^2
 ```
 -->
-
-
-となる。すなわち、Sb^2 =  w0 * w1 * (M0 - M1) ^2 が最大となる、閾値tを二値化の閾値とすれば良い。
 
 |入力 (imori.jpg)|出力 (th = 127) (answers_image/answer_4.jpg)|
 |:---:|:---:|
@@ -210,11 +230,16 @@ val = {  32  (  0 <= val <  64)
 このようにグリッド分割し、その領域内の代表値を求める操作は**Pooling(プーリング)** と呼ばれる。
 これらプーリング操作は**CNN(Convolutional Neural Network)** において重要な役割を持つ。
 
-これは次式で定義される。
+これは次式で定義される。ここでいうRはプーリングを行う領域である。つまり、3x3の領域でプーリングを行う。|R|=3x3=9となる。
 
+<img src="assets/mean_pooling.png" width=150> <br>
+<img src="assets/mean_pooling_result.png" width=300>
+
+<!--
 ```bash
 v = 1/|R| * Sum_{i in R} v_i
 ```
+-->
 
 ここではimori.jpgは128x128なので、8x8にグリッド分割し、平均プーリングせよ。
 
